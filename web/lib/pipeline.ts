@@ -17,7 +17,8 @@ import type { Claim, Entity, Report } from "./types";
 const AGENCIES = ["ftc", "fcc", "dnc"] as const;
 
 /** Step 1: runs right after ingest (and again daily for anything stuck). */
-export async function processReport(reportId: string): Promise<void> {
+export async function processReport(reportId: string, opts: { notify?: boolean } = {}): Promise<void> {
+  const notify = opts.notify ?? true;
   const supa = db();
   const { data } = await supa.from("reports").select("*").eq("id", reportId).single();
   const report = data as Report;
@@ -49,7 +50,7 @@ export async function processReport(reportId: string): Promise<void> {
     const line2 = claim.status === "not_yet_viable"
       ? `Claim not yet viable: ${esc(claim.basis.reasons[0] ?? "")}`
       : `Claim ${esc(claim.status)} — ${claim.violation_count} violation(s), ${dollars(claim.estimated_min_cents)}–${dollars(claim.estimated_max_cents)}`;
-    await tgSend(`📨 <b>Reported ${report.kind}</b> from ${who}\n${esc((report.body ?? "").slice(0, 160))}\n\n${line2}\nFTC/FCC/DNC complaints queued.${entity ? "" : "\nReply <code>/entity " + report.id.slice(0, 8) + " | Company Name | mailing address</code> if you know who it is."}`, { silent: true });
+    if (notify) await tgSend(`📨 <b>Reported ${report.kind}</b> from ${who}\n${esc((report.body ?? "").slice(0, 160))}\n\n${line2}\nFTC/FCC/DNC complaints queued.${entity ? "" : "\nReply <code>/entity " + report.id.slice(0, 8) + " | Company Name | mailing address</code> if you know who it is."}`, { silent: true });
 
     await advanceClaim(claim.id);
   } catch (e) {
@@ -196,7 +197,7 @@ export async function runDaily(): Promise<Record<string, number>> {
   const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString();
   const { data: stuck } = await supa.from("reports").select("id,status,updated_at")
     .or(`status.eq.received,status.eq.error,and(status.eq.needs_identification,updated_at.lt.${weekAgo})`).limit(50);
-  for (const r of stuck ?? []) { await processReport(r.id as string); stats.reprocessed++; }
+  for (const r of stuck ?? []) { await processReport(r.id as string, { notify: r.status !== "needs_identification" }); stats.reprocessed++; }
 
   // 2. Advance every open claim.
   const { data: claims } = await supa.from("claims").select("id").not("status", "in", "(settled,closed,filed)");

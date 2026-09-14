@@ -72,7 +72,7 @@ async function handleCommand(text: string): Promise<string> {
       await setSetting("dnc_registered_at", arg);
       const { data: claims } = await supa.from("claims").select("id").in("status", ["assessing", "not_yet_viable"]);
       const { data: reports } = await supa.from("reports").select("id").in("status", ["identified", "needs_identification"]).limit(100);
-      for (const r of reports ?? []) await processReport(r.id as string);
+      for (const r of reports ?? []) await processReport(r.id as string, { notify: false });
       for (const c of claims ?? []) await advanceClaim(c.id as string);
       return `Do Not Call registration date set to ${arg}. Re-assessed ${claims?.length ?? 0} claim(s).`;
     }
@@ -149,7 +149,7 @@ async function handleCommand(text: string): Promise<string> {
       await supa.from("senders").update({ entity_id: entityId }).eq("phone", report!.sender_phone);
       await supa.from("claims").update({ status: "closed", notes: "Superseded: sender identified" }).is("entity_id", null).eq("sender_phone", report!.sender_phone).in("status", ["assessing", "not_yet_viable"]);
       const { data: rs } = await supa.from("reports").select("id").eq("sender_phone", report!.sender_phone);
-      for (const r of rs ?? []) await processReport(r.id as string);
+      for (const r of rs ?? []) await processReport(r.id as string, { notify: false });
       return `Linked ${esc(prettyPhone(report!.sender_phone))} to <b>${esc(name)}</b>${mailing_address && mailing_address.city ? " with a mailing address" : address ? " (address not parsed as 'street, city, ST zip'; fix it in the dashboard)" : ""}. Re-assessed.`;
     }
     default:

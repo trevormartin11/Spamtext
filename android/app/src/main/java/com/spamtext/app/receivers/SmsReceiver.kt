@@ -43,7 +43,8 @@ class SmsReceiver : BroadcastReceiver() {
 
     private fun handleCarrierReply(context: Context, prefs: Prefs, body: String) {
         // AT&T: "...please reply with the phone number or email address the message came from..."
-        if (!body.contains("number", ignoreCase = true) && !body.contains("reply", ignoreCase = true)) return
+        val asksForNumber = body.contains("number", ignoreCase = true) && (body.contains("reply", ignoreCase = true) || body.contains("respond", ignoreCase = true))
+        if (!asksForNumber) return
         val number = prefs.pop7726() ?: return
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) return
         try {
