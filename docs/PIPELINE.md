@@ -35,7 +35,7 @@ phone ──► POST /api/reports ──► reports (received)
 
 ## GitHub Action (`file-complaints.yml`, 07:30 Arizona)
 
-Runs `worker/` with Playwright against pending `complaint_jobs`. Each job gets a screenshot in Supabase Storage (`documents/complaints/<report>/<agency>-done.png`) and a confirmation number when the site shows one. Failures back off 6h/12h/18h and then escalate to manual.
+Runs `worker/` with Playwright against pending `complaint_jobs` (FTC for everything, Do Not Call for calls only, FCC where the Cloudflare challenge lets it through). Each job gets a screenshot in Supabase Storage (`documents/complaints/<report>/<agency>-done.png`) and a confirmation number when the site shows one. Failures back off 6h/12h/18h and then escalate to manual.
 
 ## Money guard
 

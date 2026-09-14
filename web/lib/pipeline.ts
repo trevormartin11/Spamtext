@@ -34,7 +34,8 @@ export async function processReport(reportId: string, opts: { notify?: boolean }
 
     // Government complaints: queue one job per agency (the browser worker files them).
     await supa.from("complaint_jobs").upsert(
-      AGENCIES.filter((a) => a !== "dnc" || report.kind !== "voicemail").map((agency) => ({ report_id: report.id, agency })),
+      // donotcall.gov only takes call complaints; texts are routed to FTC ReportFraud (which we file anyway).
+      AGENCIES.filter((a) => a !== "dnc" || report.kind !== "sms").map((agency) => ({ report_id: report.id, agency })),
       { onConflict: "report_id,agency", ignoreDuplicates: true },
     );
 
@@ -50,7 +51,7 @@ export async function processReport(reportId: string, opts: { notify?: boolean }
     const line2 = claim.status === "not_yet_viable"
       ? `Claim not yet viable: ${esc(claim.basis.reasons[0] ?? "")}`
       : `Claim ${esc(claim.status)} — ${claim.violation_count} violation(s), ${dollars(claim.estimated_min_cents)}–${dollars(claim.estimated_max_cents)}`;
-    if (notify) await tgSend(`📨 <b>Reported ${report.kind}</b> from ${who}\n${esc((report.body ?? "").slice(0, 160))}\n\n${line2}\nFTC/FCC/DNC complaints queued.${entity ? "" : "\nReply <code>/entity " + report.id.slice(0, 8) + " | Company Name | mailing address</code> if you know who it is."}`, { silent: true });
+    if (notify) await tgSend(`📨 <b>Reported ${report.kind}</b> from ${who}\n${esc((report.body ?? "").slice(0, 160))}\n\n${line2}\n${report.kind === "sms" ? "FTC and FCC" : "FTC, FCC and Do Not Call"} complaints queued.${entity ? "" : "\nReply <code>/entity " + report.id.slice(0, 8) + " | Company Name | mailing address</code> if you know who it is."}`, { silent: true });
 
     await advanceClaim(claim.id);
   } catch (e) {

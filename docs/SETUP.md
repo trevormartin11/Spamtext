@@ -41,6 +41,22 @@ Repository → Settings → Secrets and variables → Actions. Add: `SUPABASE_UR
 
 Then Actions → "File government complaints" → Run workflow with **dry_run = true** once. It fills every pending form, screenshots it into Supabase Storage (`documents/complaints/...`), and never clicks submit. Look at the screenshots in the Supabase dashboard; if they look right, the scheduled run (07:30 Arizona) files for real. Set `only_agency` to test one site at a time.
 
+What each site accepts (verified against the live forms on 2026-09-14):
+
+| Site | Texts | Calls | Notes |
+|---|---|---|---|
+| FTC ReportFraud | yes | yes | No CAPTCHA. Texts go through the site's own "Something else → Text" path; calls through "Just an annoying call". |
+| donotcall.gov | **no** | yes | The site refuses text complaints and redirects to the FTC form, so text reports only queue FTC + FCC. |
+| FCC Consumer Complaints | yes | yes | Behind a Cloudflare challenge that blocks headless browsers on datacenter IPs (GitHub Actions included). Those jobs fail three times and become "manual". To file them automatically, run the worker from your own computer once in a while: |
+
+```bash
+cd worker && cp .env.example .env    # fill in Supabase + your details
+npm install && npx playwright install chromium
+HEADLESS=0 ONLY_AGENCY=fcc npm start  # a visible browser window; the challenge usually passes from a home IP
+```
+
+Dry-run the filers without touching the database: `npm run selftest` (synthetic report, never submits, screenshots in `worker/screenshots/`).
+
 ## 5. Android app
 
 Build the APK (any of these):

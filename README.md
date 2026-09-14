@@ -37,6 +37,9 @@ secrets, install the APK, enter the server URL and API key, and set your Do Not 
 
 - Government complaint forms have no API; the worker drives them in a browser. Sites change. When a filing fails
   three times you get the link to do it by hand, with the text pre-written in the dashboard.
+- The FCC form sits behind a Cloudflare challenge that blocks headless browsers from cloud IPs, so FCC filings
+  work best when you run the worker from home now and then (`HEADLESS=0 ONLY_AGENCY=fcc npm start`). FTC and
+  Do Not Call file fine from GitHub Actions. Do Not Call does not accept text complaints at all (it defers to the FTC).
 - Identifying the real company behind a number is the hard part. When the pipeline can't, it tells you, and one
   Telegram command (`/entity`) links the number to a company and address you found.
 - Nothing here files a lawsuit for you; it prepares the paperwork.
