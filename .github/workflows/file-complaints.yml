@@ -1,0 +1,47 @@
+name: File government complaints
+
+# Runs the Playwright worker that submits pending FTC / FCC / Do Not Call complaints.
+# Vercel serverless functions cannot run a browser, so this job does it on a schedule.
+on:
+  schedule:
+    - cron: "30 14 * * *"   # daily, 30 min after the Vercel daily cron (07:30 Arizona)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Fill forms and screenshot, but never submit"
+        type: boolean
+        default: false
+      only_agency:
+        description: "ftc | fcc | dnc (blank = all)"
+        type: string
+        default: ""
+
+jobs:
+  file:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: worker/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm start
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          USER_FULL_NAME: ${{ secrets.USER_FULL_NAME }}
+          USER_PHONE: ${{ secrets.USER_PHONE }}
+          USER_EMAIL: ${{ secrets.USER_EMAIL }}
+          USER_ADDRESS_LINE1: ${{ secrets.USER_ADDRESS_LINE1 }}
+          USER_CITY: ${{ secrets.USER_CITY }}
+          USER_STATE: ${{ secrets.USER_STATE }}
+          USER_ZIP: ${{ secrets.USER_ZIP }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+          ONLY_AGENCY: ${{ inputs.only_agency }}
