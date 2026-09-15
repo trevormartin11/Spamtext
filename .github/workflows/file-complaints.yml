@@ -24,6 +24,7 @@ jobs:
       run:
         working-directory: worker
     steps:
+      - uses: actions/checkout@v4
       - name: Check configuration
         id: cfg
         env:
@@ -35,8 +36,6 @@ jobs:
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/checkout@v4
-        if: steps.cfg.outputs.ready == 'true'
       - uses: actions/setup-node@v4
         if: steps.cfg.outputs.ready == 'true'
         with:
