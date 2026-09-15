@@ -24,15 +24,31 @@ jobs:
       run:
         working-directory: worker
     steps:
+      - name: Check configuration
+        id: cfg
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        run: |
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "::notice::SUPABASE_URL secret is not set; skipping (see docs/SETUP.md step 4)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ready == 'true'
       - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.ready == 'true'
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: worker/package-lock.json
       - run: npm ci
+        if: steps.cfg.outputs.ready == 'true'
       - run: npx playwright install --with-deps chromium
+        if: steps.cfg.outputs.ready == 'true'
       - run: npm start
+        if: steps.cfg.outputs.ready == 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
