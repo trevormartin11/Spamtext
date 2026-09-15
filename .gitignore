@@ -1,0 +1,33 @@
+# deps / builds
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+.vercel/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.jks
+*.keystore
+local.properties
+
+# android
+android/.gradle/
+android/build/
+android/app/build/
+android/.idea/
+android/*.iml
+android/app/*.iml
+android/.kotlin/
+android/captures/
+
+# misc
+.DS_Store
+*.log
+playwright-report/
+test-results/
+worker/screenshots/
